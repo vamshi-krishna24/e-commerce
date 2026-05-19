@@ -1,0 +1,6 @@
+[
+  { "id": "u1", "name": "Alice Johnson", "email": "alice@example.com", "password": "password", "role": "customer" },
+  { "id": "u2", "name": "Bob Martinez", "email": "bob@example.com", "password": "password", "role": "customer" },
+  { "id": "u3", "name": "Carol White", "email": "carol@example.com", "password": "password", "role": "customer" },
+  { "id": "admin1", "name": "Admin", "email": "admin@marketcore.com", "password": "admin123", "role": "admin" }
+]

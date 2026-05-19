@@ -1,0 +1,19 @@
+.auth-page { min-height: calc(100vh - var(--navbar-height)); display: flex; align-items: center; justify-content: center; padding: var(--space-8); background: var(--color-surface-2); }
+.auth-card { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-2xl); padding: var(--space-10); width: 100%; max-width: 440px; box-shadow: var(--shadow-xl); }
+.auth-header { text-align: center; margin-bottom: var(--space-6); display: flex; flex-direction: column; align-items: center; gap: var(--space-2); }
+.auth-logo { font-family: var(--family-display); font-size: var(--text-xl); font-weight: 700; color: var(--color-primary); margin-bottom: var(--space-2); }
+.auth-logo span { color: var(--color-accent); }
+.auth-header h1 { font-family: var(--family-display); font-size: var(--text-2xl); font-weight: 700; color: var(--color-text-primary); }
+.auth-header p { font-size: var(--text-sm); color: var(--color-text-muted); }
+.auth-demo { background: var(--color-surface-2); border-radius: var(--radius-lg); padding: var(--space-3) var(--space-4); margin-bottom: var(--space-5); font-size: var(--text-xs); color: var(--color-text-secondary); display: flex; flex-direction: column; gap: var(--space-1); }
+.auth-demo strong { color: var(--color-text-primary); font-weight: 600; }
+.auth-error { background: var(--color-error-bg); color: var(--color-error); font-size: var(--text-sm); padding: var(--space-3) var(--space-4); border-radius: var(--radius-md); margin-bottom: var(--space-4); border: 1px solid rgba(192,57,43,.2); }
+.auth-error.hidden { display: none; }
+.auth-form { display: flex; flex-direction: column; gap: var(--space-5); }
+.input-wrap { position: relative; }
+.input-icon { position: absolute; left: var(--space-3); top: 50%; transform: translateY(-50%); color: var(--color-text-muted); pointer-events: none; font-style: normal; }
+.icon-input { padding-left: var(--space-8) !important; }
+.auth-submit { width: 100%; background: var(--color-accent); color: white; font-size: var(--text-base); font-weight: 600; padding: var(--space-3); border-radius: var(--radius-full); transition: background .2s; margin-top: var(--space-2); cursor: pointer; border: none; }
+.auth-submit:hover { background: var(--color-accent-hover); }
+.auth-footer { text-align: center; font-size: var(--text-sm); color: var(--color-text-muted); margin-top: var(--space-6); }
+.auth-footer a { color: var(--color-accent); font-weight: 600; }

@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Product - MarketCore</title>
+  <link rel="stylesheet" href="css/theme.css">
+  <link rel="stylesheet" href="css/reset.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/pages/product.css">
+</head>
+<body>
+<div id="navbar"></div>
+<main class="product-page">
+  <div class="container">
+    <div id="product-content"><p class="loading-text">Loading...</p></div>
+  </div>
+</main>
+<div id="footer"></div>
+<script src="js/db.js"></script>
+<script src="js/store.js"></script>
+<script src="js/utils.js"></script>
+<script>
+(async () => {
+  await Utils.initPage();
+  const id = new URLSearchParams(window.location.search).get('id');
+  const product = id ? DB.getProductById(id) : null;
+  const el = document.getElementById('product-content');
+
+  if (!product) {
+    el.innerHTML = '<div class="not-found"><h2>Product not found</h2><p>The product you are looking for does not exist.</p><a href="gallery.html" class="btn-primary">Back to Shop</a></div>';
+    return;
+  }
+
+  document.title = product.name + ' – MarketCore';
+  const disc = Utils.discount(product.price, product.originalPrice);
+  let qty = 1;
+
+  function stockHTML() {
+    if (product.stock > 10) return '<span class="in-stock">&#10003; In Stock (' + product.stock + ' available)</span>';
+    if (product.stock > 0)  return '<span class="low-stock">&#9888; Only ' + product.stock + ' left!</span>';
+    return '<span class="out-stock">&times; Out of Stock</span>';
+  }
+
+  function render() {
+    el.innerHTML = [
+      '<button class="back-btn" onclick="history.back()">&#8592; Back</button>',
+      '<div class="product-layout">',
+        '<div class="product-image-sec">',
+          '<div class="product-image-wrap">',
+            '<img src="' + Utils.esc(product.image) + '" alt="' + Utils.esc(product.name) + '" class="product-image">',
+            (disc ? '<span class="product-badge">-' + disc + '%</span>' : ''),
+            (product.isNew ? '<span class="product-badge-new">New</span>' : ''),
+          '</div>',
+        '</div>',
+        '<div class="product-info">',
+          '<p class="product-category">' + Utils.esc(product.category) + '</p>',
+          '<h1 class="product-name">' + Utils.esc(product.name) + '</h1>',
+          '<div class="product-rating-row">',
+            '<div class="product-stars">' + Utils.stars(product.rating) + '</div>',
+            '<span class="product-rating-val">' + product.rating + '</span>',
+            '<span class="product-review-count">(' + Number(product.reviewCount).toLocaleString() + ' reviews)</span>',
+          '</div>',
+          '<div class="product-price-row">',
+            '<span class="product-price">' + Utils.formatPrice(product.price) + '</span>',
+            (product.originalPrice ? '<span class="product-orig-price">' + Utils.formatPrice(product.originalPrice) + '</span>' : ''),
+          '</div>',
+          '<p class="product-description">' + Utils.esc(product.description) + '</p>',
+          '<div class="product-stock">' + stockHTML() + '</div>',
+          '<div class="product-controls">',
+            '<div class="qty-control">',
+              '<button class="qty-btn" id="qty-minus" ' + (qty <= 1 ? 'disabled' : '') + '>&minus;</button>',
+              '<span class="qty-val" id="qty-val">' + qty + '</span>',
+              '<button class="qty-btn" id="qty-plus" ' + (qty >= product.stock ? 'disabled' : '') + '>+</button>',
+            '</div>',
+            '<button class="add-to-cart-btn" id="add-btn" ' + (product.stock === 0 ? 'disabled' : '') + '>',
+              '&#128722; Add to Cart',
+            '</button>',
+          '</div>',
+          '<div class="product-perks">',
+            '<div class="perk">&#128666; Free shipping over $75</div>',
+            '<div class="perk">&#9989; 2-year quality guarantee</div>',
+            '<div class="perk">&#128260; 30-day hassle-free returns</div>',
+          '</div>',
+        '</div>',
+      '</div>',
+    ].join('');
+
+    document.getElementById('qty-minus').addEventListener('click', () => {
+      if (qty > 1) { qty--; refreshQty(); }
+    });
+    document.getElementById('qty-plus').addEventListener('click', () => {
+      if (qty < product.stock) { qty++; refreshQty(); }
+    });
+    document.getElementById('add-btn').addEventListener('click', () => {
+      if (product.stock === 0) return;
+      Store.addToCart(product, qty);
+      Utils.toast('Added ' + qty + ' to cart!', 'success');
+      const btn = document.getElementById('add-btn');
+      btn.innerHTML = '&#10003; Added to Cart!';
+      btn.style.background = 'var(--color-success)';
+      setTimeout(() => {
+        btn.innerHTML = '&#128722; Add to Cart';
+        btn.style.background = '';
+      }, 2000);
+    });
+  }
+
+  function refreshQty() {
+    document.getElementById('qty-val').textContent = qty;
+    document.getElementById('qty-minus').disabled = qty <= 1;
+    document.getElementById('qty-plus').disabled  = qty >= product.stock;
+  }
+
+  render();
+})();
+</script>
+</body>
+</html>

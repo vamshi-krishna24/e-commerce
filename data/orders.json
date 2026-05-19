@@ -1,0 +1,69 @@
+[
+  {
+    "id": "ORD-001",
+    "customerId": "u1",
+    "customerName": "Alice Johnson",
+    "customerEmail": "alice@example.com",
+    "items": [
+      { "productId": "p1", "productName": "Wireless Noise-Cancelling Headphones", "price": 249.99, "quantity": 1, "image": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=100&q=80" },
+      { "productId": "p3", "productName": "Premium Yoga Mat", "price": 78.00, "quantity": 1, "image": "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=100&q=80" }
+    ],
+    "total": 327.99,
+    "status": "Shipped",
+    "createdAt": "2025-06-10T09:23:00Z",
+    "shippingAddress": { "fullName": "Alice Johnson", "street": "123 Maple St", "city": "Portland", "state": "OR", "zip": "97201", "country": "US" }
+  },
+  {
+    "id": "ORD-002",
+    "customerId": "u1",
+    "customerName": "Alice Johnson",
+    "customerEmail": "alice@example.com",
+    "items": [
+      { "productId": "p4", "productName": "Linen Oversized Shirt", "price": 89.00, "quantity": 2, "image": "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=100&q=80" }
+    ],
+    "total": 178.00,
+    "status": "Delivered",
+    "createdAt": "2025-05-28T14:10:00Z",
+    "shippingAddress": { "fullName": "Alice Johnson", "street": "123 Maple St", "city": "Portland", "state": "OR", "zip": "97201", "country": "US" }
+  },
+  {
+    "id": "ORD-003",
+    "customerId": "u2",
+    "customerName": "Bob Martinez",
+    "customerEmail": "bob@example.com",
+    "items": [
+      { "productId": "p5", "productName": "Smart Home Air Purifier", "price": 329.00, "quantity": 1, "image": "https://images.unsplash.com/photo-1585771724684-38269d6639fd?w=100&q=80" }
+    ],
+    "total": 329.00,
+    "status": "Pending",
+    "createdAt": "2025-06-14T11:45:00Z",
+    "shippingAddress": { "fullName": "Bob Martinez", "street": "456 Oak Ave", "city": "Austin", "state": "TX", "zip": "78701", "country": "US" }
+  },
+  {
+    "id": "ORD-004",
+    "customerId": "u3",
+    "customerName": "Carol White",
+    "customerEmail": "carol@example.com",
+    "items": [
+      { "productId": "p2", "productName": "Minimalist Leather Watch", "price": 189.00, "quantity": 1, "image": "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=100&q=80" },
+      { "productId": "p8", "productName": "Vitamin C Brightening Serum", "price": 52.00, "quantity": 2, "image": "https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=100&q=80" }
+    ],
+    "total": 293.00,
+    "status": "Processing",
+    "createdAt": "2025-06-13T16:30:00Z",
+    "shippingAddress": { "fullName": "Carol White", "street": "789 Pine Rd", "city": "Chicago", "state": "IL", "zip": "60601", "country": "US" }
+  },
+  {
+    "id": "ORD-005",
+    "customerId": "u1",
+    "customerName": "Alice Johnson",
+    "customerEmail": "alice@example.com",
+    "items": [
+      { "productId": "p10", "productName": "Portable Bluetooth Speaker", "price": 99.00, "quantity": 1, "image": "https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?w=100&q=80" }
+    ],
+    "total": 99.00,
+    "status": "Pending",
+    "createdAt": "2025-06-15T08:00:00Z",
+    "shippingAddress": { "fullName": "Alice Johnson", "street": "123 Maple St", "city": "Portland", "state": "OR", "zip": "97201", "country": "US" }
+  }
+]

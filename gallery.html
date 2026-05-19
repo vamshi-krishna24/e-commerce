@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shop All Products – MarketCore</title>
+  <link rel="stylesheet" href="css/theme.css">
+  <link rel="stylesheet" href="css/reset.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/pages/gallery.css">
+</head>
+<body>
+<div id="navbar"></div>
+
+<main class="gallery-page">
+  <div class="container gallery-layout">
+    <!-- Sidebar Filters -->
+    <aside class="gallery-sidebar">
+      <div class="filter-section">
+        <h3 class="filter-title">Category</h3>
+        <button class="filter-btn filter-active" data-cat="">All Products</button>
+        <div id="cat-filters"></div>
+      </div>
+      <div class="filter-section">
+        <h3 class="filter-title">Price Range</h3>
+        <button class="filter-btn filter-active" data-price="0">All Prices</button>
+        <button class="filter-btn" data-price="1">Under $50</button>
+        <button class="filter-btn" data-price="2">$50 – $100</button>
+        <button class="filter-btn" data-price="3">$100 – $200</button>
+        <button class="filter-btn" data-price="4">Over $200</button>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="gallery-content">
+      <div class="gallery-toolbar">
+        <div class="search-wrap">
+          <svg class="search-icon" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+          <input type="text" id="search-input" placeholder="Search products..." class="search-input" autocomplete="off">
+        </div>
+        <div class="toolbar-right">
+          <span class="result-count" id="result-count">0 products</span>
+          <select id="sort-select" class="sort-select">
+            <option value="featured">Featured</option>
+            <option value="price-asc">Price: Low to High</option>
+            <option value="price-desc">Price: High to Low</option>
+            <option value="rating">Best Rated</option>
+            <option value="reviews">Most Reviews</option>
+          </select>
+          <button class="clear-btn hidden" id="clear-btn">&times; Clear</button>
+        </div>
+      </div>
+
+      <div class="gallery-grid" id="gallery-grid"></div>
+
+      <div class="gallery-empty hidden" id="gallery-empty">
+        <p>No products match your filters.</p>
+        <button class="clear-btn" id="clear-btn-2">&times; Clear Filters</button>
+      </div>
+
+      <div class="pagination" id="pagination"></div>
+    </div>
+  </div>
+</main>
+
+<div id="footer"></div>
+
+<script src="js/db.js"></script>
+<script src="js/store.js"></script>
+<script src="js/utils.js"></script>
+<script>
+const PAGE_SIZE = 9;
+const PRICE_RANGES = [
+  { min: 0,   max: Infinity },
+  { min: 0,   max: 50 },
+  { min: 50,  max: 100 },
+  { min: 100, max: 200 },
+  { min: 200, max: Infinity },
+];
+
+let state = { category: '', search: '', priceIdx: 0, sort: 'featured', page: 1 };
+
+(async () => {
+  await Utils.initPage();
+
+  // Read URL params
+  const params = new URLSearchParams(window.location.search);
+  const urlCat = params.get('category') || '';
+  if (urlCat) state.category = urlCat;
+
+  // Build category filter buttons
+  const catFilters = document.getElementById('cat-filters');
+  catFilters.innerHTML = DB.categories.map(c =>
+    '<button class="filter-btn" data-cat="' + Utils.esc(c.slug) + '">' + c.icon + ' ' + Utils.esc(c.name) + '</button>'
+  ).join('');
+
+  // Set active category highlight
+  if (state.category) {
+    document.querySelector('[data-cat=""]').classList.remove('filter-active');
+    const activeBtn = document.querySelector('[data-cat="' + CSS.escape(state.category) + '"]');
+    if (activeBtn) activeBtn.classList.add('filter-active');
+  }
+
+  bindEvents();
+  render();
+})();
+
+function bindEvents() {
+  // Category filters
+  document.querySelectorAll('[data-cat]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      state.category = btn.dataset.cat;
+      state.page = 1;
+      document.querySelectorAll('[data-cat]').forEach(b => b.classList.remove('filter-active'));
+      btn.classList.add('filter-active');
+      render();
+    });
+  });
+
+  // Price filters
+  document.querySelectorAll('[data-price]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      state.priceIdx = +btn.dataset.price;
+      state.page = 1;
+      document.querySelectorAll('[data-price]').forEach(b => b.classList.remove('filter-active'));
+      btn.classList.add('filter-active');
+      render();
+    });
+  });
+
+  // Search
+  document.getElementById('search-input').addEventListener('input', e => {
+    state.search = e.target.value.trim();
+    state.page = 1;
+    render();
+  });
+
+  // Sort
+  document.getElementById('sort-select').addEventListener('change', e => {
+    state.sort = e.target.value;
+    state.page = 1;
+    render();
+  });
+
+  // Clear buttons
+  document.getElementById('clear-btn').addEventListener('click', clearFilters);
+  document.getElementById('clear-btn-2').addEventListener('click', clearFilters);
+}
+
+function clearFilters() {
+  state = { category: '', search: '', priceIdx: 0, sort: 'featured', page: 1 };
+  document.getElementById('search-input').value = '';
+  document.getElementById('sort-select').value = 'featured';
+  document.querySelectorAll('[data-cat]').forEach(b => b.classList.toggle('filter-active', b.dataset.cat === ''));
+  document.querySelectorAll('[data-price]').forEach(b => b.classList.toggle('filter-active', b.dataset.price === '0'));
+  render();
+}
+
+function applyFilters() {
+  let result = DB.getAllProducts().slice(); // copy
+  if (state.category) {
+    result = result.filter(p => p.category === state.category);
+  }
+  if (state.search) {
+    const q = state.search.toLowerCase();
+    result = result.filter(p =>
+      p.name.toLowerCase().includes(q) ||
+      (p.description || '').toLowerCase().includes(q) ||
+      (p.category || '').toLowerCase().includes(q)
+    );
+  }
+  const range = PRICE_RANGES[state.priceIdx] || PRICE_RANGES[0];
+  result = result.filter(p => p.price >= range.min && p.price <= range.max);
+  switch (state.sort) {
+    case 'price-asc':  result.sort((a, b) => a.price - b.price); break;
+    case 'price-desc': result.sort((a, b) => b.price - a.price); break;
+    case 'rating':     result.sort((a, b) => b.rating - a.rating); break;
+    case 'reviews':    result.sort((a, b) => b.reviewCount - a.reviewCount); break;
+    default:           result.sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0)); break;
+  }
+  return result;
+}
+
+function render() {
+  const filtered = applyFilters();
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  if (state.page > totalPages) state.page = totalPages;
+  const paginated = filtered.slice((state.page - 1) * PAGE_SIZE, state.page * PAGE_SIZE);
+
+  const hasFilters = state.category || state.search || state.priceIdx !== 0 || state.sort !== 'featured';
+  document.getElementById('clear-btn').classList.toggle('hidden', !hasFilters);
+  document.getElementById('result-count').textContent = filtered.length + ' product' + (filtered.length !== 1 ? 's' : '');
+
+  const grid  = document.getElementById('gallery-grid');
+  const empty = document.getElementById('gallery-empty');
+
+  if (paginated.length === 0) {
+    grid.innerHTML = '';
+    empty.classList.remove('hidden');
+  } else {
+    empty.classList.add('hidden');
+    grid.innerHTML = paginated.map(p => Utils.productCardHTML(p)).join('');
+    Utils.bindAddToCart(grid);
+  }
+
+  // Pagination
+  const pag = document.getElementById('pagination');
+  if (totalPages <= 1) { pag.innerHTML = ''; return; }
+
+  let html = '<button class="page-btn" ' + (state.page === 1 ? 'disabled' : '') + ' data-p="' + (state.page - 1) + '">&#8592; Prev</button>';
+  for (let i = 1; i <= totalPages; i++) {
+    html += '<button class="page-btn ' + (state.page === i ? 'page-active' : '') + '" data-p="' + i + '">' + i + '</button>';
+  }
+  html += '<button class="page-btn" ' + (state.page === totalPages ? 'disabled' : '') + ' data-p="' + (state.page + 1) + '">Next &#8594;</button>';
+  pag.innerHTML = html;
+  pag.querySelectorAll('[data-p]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (!btn.disabled) { state.page = +btn.dataset.p; render(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+    });
+  });
+}
+</script>
+</body>
+</html>

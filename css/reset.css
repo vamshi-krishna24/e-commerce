@@ -1,0 +1,13 @@
+*,*::before,*::after { box-sizing: border-box; }
+* { margin: 0; }
+body { line-height: 1.5; -webkit-font-smoothing: antialiased; font-family: var(--family-body); background: var(--color-background); color: var(--color-text-primary); font-size: var(--text-base); }
+img,picture,video,canvas,svg { display: block; max-width: 100%; }
+input,button,textarea,select { font: inherit; }
+p,h1,h2,h3,h4,h5,h6 { overflow-wrap: break-word; }
+p { text-wrap: pretty; }
+h1,h2,h3,h4,h5,h6 { text-wrap: balance; }
+a { text-decoration: none; color: inherit; }
+button { border: none; cursor: pointer; background: none; }
+.sr-only { position: absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border-width:0; }
+.container { max-width: var(--container-max); margin: 0 auto; padding: 0 var(--space-6); }
+@media (max-width:768px) { .container { padding: 0 var(--space-4); } }

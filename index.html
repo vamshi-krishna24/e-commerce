@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MarketCore – Premium Online Shopping</title>
+  <meta name="description" content="Discover curated products at unbeatable prices.">
+  <link rel="stylesheet" href="css/theme.css">
+  <link rel="stylesheet" href="css/reset.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/pages/home.css">
+</head>
+<body>
+<div id="navbar"></div>
+
+<main>
+  <!-- Hero -->
+  <section class="hero">
+    <div class="container hero-inner">
+      <div class="hero-content">
+        <span class="hero-pill">Summer Sale — Up to 30% Off</span>
+        <h1 class="hero-title">Discover Products<br>You'll <em>Love</em></h1>
+        <p class="hero-sub">Curated collections from top brands. Free shipping on orders over $75.</p>
+        <div class="hero-cta">
+          <a href="gallery.html" class="btn-primary">Shop Now</a>
+          <a href="gallery.html?category=Electronics" class="btn-secondary">View Electronics</a>
+        </div>
+      </div>
+      <div class="hero-image-wrap">
+        <img src="https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=700&q=80" alt="Shopping" class="hero-image" loading="lazy">
+        <div class="hero-card">
+          <span class="hero-card-icon">&#128717;</span>
+          <div>
+            <strong>10,000+</strong>
+            <span>Happy Customers</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Categories -->
+  <section class="home-categories">
+    <div class="container">
+      <h2 class="section-title">Shop by Category</h2>
+      <div class="categories-grid" id="categories-grid"></div>
+    </div>
+  </section>
+
+  <!-- Featured Products -->
+  <section class="featured-section">
+    <div class="container">
+      <div class="section-header">
+        <div>
+          <h2 class="section-title">Featured Products</h2>
+          <p class="section-sub">Hand-picked selections from our top-rated catalog.</p>
+        </div>
+        <a href="gallery.html" class="view-all">View All &rarr;</a>
+      </div>
+      <div class="products-grid" id="featured-grid"></div>
+    </div>
+  </section>
+
+  <!-- Promo Banner -->
+  <section class="promo-section">
+    <div class="container">
+      <div class="promo-inner">
+        <div class="promo-content">
+          <h2>Free Shipping Over $75</h2>
+          <p>Shop with confidence. Fast delivery, easy returns, and 24/7 support.</p>
+          <a href="gallery.html" class="btn-primary">Start Shopping</a>
+        </div>
+        <img src="https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=500&q=80" alt="Delivery" class="promo-image" loading="lazy">
+      </div>
+    </div>
+  </section>
+</main>
+
+<div id="footer"></div>
+
+<script src="js/db.js"></script>
+<script src="js/store.js"></script>
+<script src="js/utils.js"></script>
+<script>
+(async () => {
+  await Utils.initPage();
+
+  // Render categories
+  const catGrid = document.getElementById('categories-grid');
+  catGrid.innerHTML = DB.categories.map(cat =>
+    '<a href="gallery.html?category=' + encodeURIComponent(cat.slug) + '" class="category-card">' +
+      '<img src="' + Utils.esc(cat.image) + '" alt="' + Utils.esc(cat.name) + '" class="category-image" loading="lazy">' +
+      '<div class="category-overlay">' +
+        '<span class="category-icon">' + cat.icon + '</span>' +
+        '<span class="category-name">' + Utils.esc(cat.name) + '</span>' +
+      '</div>' +
+    '</a>'
+  ).join('');
+
+  // Render featured products
+  const featuredGrid = document.getElementById('featured-grid');
+  const featured = DB.getFeatured();
+  if (featured.length === 0) {
+    featuredGrid.innerHTML = '<p style="color:var(--color-text-muted);padding:var(--space-8)">No featured products yet.</p>';
+  } else {
+    featuredGrid.innerHTML = featured.map(p => Utils.productCardHTML(p)).join('');
+    Utils.bindAddToCart(featuredGrid);
+  }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Orders – MarketCore</title>
+  <link rel="stylesheet" href="css/theme.css">
+  <link rel="stylesheet" href="css/reset.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/pages/orders.css">
+</head>
+<body>
+<div id="navbar"></div>
+<main class="orders-page">
+  <div class="container" id="orders-root"></div>
+</main>
+<div id="footer"></div>
+<script src="js/db.js"></script>
+<script src="js/store.js"></script>
+<script src="js/utils.js"></script>
+<script>
+(async () => {
+  await Utils.initPage();
+  const root = document.getElementById('orders-root');
+
+  if (!Store.state.user) {
+    root.innerHTML = [
+      '<div class="orders-guest">',
+        '<span style="font-size:3.5rem">&#128230;</span>',
+        '<h2>Sign in to view your orders</h2>',
+        '<p>You need to be logged in to see your order history.</p>',
+        '<a href="login.html" class="btn-primary">Sign In</a>',
+      '</div>',
+    ].join('');
+    return;
+  }
+
+  const user      = Store.state.user;
+  const allOrders = DB.getAllOrders();
+  // Admin sees all orders; customers see only their own orders
+  const orders    = user.role === 'admin'
+    ? allOrders
+    : allOrders.filter(o => o.customerId === user.id);
+
+  const header = [
+    '<div class="orders-header">',
+      '<div>',
+        '<h1 class="orders-title">' + (user.role === 'admin' ? 'All Orders' : 'My Orders') + '</h1>',
+        '<p class="orders-sub">Track and manage your purchases</p>',
+      '</div>',
+      '<a href="gallery.html" class="btn-outline">Continue Shopping</a>',
+    '</div>',
+  ].join('');
+
+  if (orders.length === 0) {
+    root.innerHTML = header + [
+      '<div class="orders-empty">',
+        '<span style="font-size:3.5rem">&#128230;</span>',
+        '<h3>No orders yet</h3>',
+        '<p>Your purchases will appear here once you place an order.</p>',
+        '<a href="gallery.html" class="btn-primary">Shop Now</a>',
+      '</div>',
+    ].join('');
+    return;
+  }
+
+  const orderCards = orders.map(order => {
+    const items = order.items.map(item =>
+      '<div class="order-item">' +
+        '<img src="' + Utils.esc(item.image) + '" alt="' + Utils.esc(item.productName) + '" class="order-item-img">' +
+        '<div class="order-item-info">' +
+          '<span class="order-item-name">' + Utils.esc(item.productName) + '</span>' +
+          '<span class="order-item-qty">Qty: ' + item.quantity + '</span>' +
+        '</div>' +
+        '<span class="order-item-price">' + Utils.formatPrice(item.price * item.quantity) + '</span>' +
+      '</div>'
+    ).join('');
+
+    const addr = order.shippingAddress || {};
+    const addrStr = [addr.city, addr.state].filter(Boolean).join(', ') || 'N/A';
+
+    return [
+      '<div class="order-card">',
+        '<div class="order-header">',
+          '<div>',
+            '<span class="order-id">' + Utils.esc(order.id) + '</span>',
+            '<span class="order-date">' + Utils.formatDate(order.createdAt) + '</span>',
+          '</div>',
+          '<div class="order-meta">',
+            Utils.statusBadge(order.status),
+            '<span class="order-total">' + Utils.formatPrice(order.total) + '</span>',
+          '</div>',
+        '</div>',
+        '<div class="order-items">' + items + '</div>',
+        '<div class="order-footer">',
+          '<span class="shipping-to">&#128666; Shipping to: ' + Utils.esc(addrStr) + '</span>',
+        '</div>',
+      '</div>',
+    ].join('');
+  }).join('');
+
+  root.innerHTML = header + '<div class="orders-list">' + orderCards + '</div>';
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard – MarketCore</title>
+  <link rel="stylesheet" href="css/theme.css">
+  <link rel="stylesheet" href="css/reset.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/pages/admin.css">
+</head>
+<body>
+<div id="navbar"></div>
+<main class="admin-page">
+  <div class="container" id="admin-root"></div>
+</main>
+<div id="footer"></div>
+
+<!-- Product Modal -->
+<div class="modal-overlay hidden" id="product-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3 id="modal-title">Add New Product</h3>
+      <button class="modal-close" id="modal-close" aria-label="Close">&times;</button>
+    </div>
+    <div class="modal-body">
+      <form id="product-form">
+        <input type="hidden" name="id">
+        <div class="form-group">
+          <label>Product Name *</label>
+          <input name="name" placeholder="e.g. Wireless Headphones" required>
+        </div>
+        <div class="admin-form-row">
+          <div class="form-group">
+            <label>Category *</label>
+            <select name="category" required>
+              <option value="">Select category...</option>
+              <option>Electronics</option>
+              <option>Clothing</option>
+              <option>Home &amp; Garden</option>
+              <option>Sports</option>
+              <option>Books</option>
+              <option>Beauty</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Stock *</label>
+            <input type="number" name="stock" placeholder="0" min="0" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Description *</label>
+          <textarea name="description" rows="3" placeholder="Product description..." required></textarea>
+        </div>
+        <div class="admin-form-row">
+          <div class="form-group">
+            <label>Price ($) *</label>
+            <input type="number" step="0.01" name="price" placeholder="0.00" min="0" required>
+          </div>
+          <div class="form-group">
+            <label>Original Price ($) <span style="font-weight:400;color:var(--color-text-muted)">(optional)</span></label>
+            <input type="number" step="0.01" name="originalPrice" placeholder="0.00" min="0">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Image URL <span style="font-weight:400;color:var(--color-text-muted)">(optional)</span></label>
+          <input name="image" placeholder="https://images.unsplash.com/..." type="url">
+        </div>
+        <div class="form-group">
+          <label style="flex-direction:row;align-items:center;gap:var(--space-2);cursor:pointer">
+            <input type="checkbox" name="featured" style="width:16px;height:16px"> Mark as Featured
+          </label>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn-outline" id="modal-cancel">Cancel</button>
+          <button type="submit" class="btn-primary" id="modal-submit">Add Product</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script src="js/db.js"></script>
+<script src="js/store.js"></script>
+<script src="js/utils.js"></script>
+<script>
+(async () => {
+  await Utils.initPage();
+  const root = document.getElementById('admin-root');
+
+  if (!Store.state.user || Store.state.user.role !== 'admin') {
+    root.innerHTML = [
+      '<div class="access-denied">',
+        '<span style="font-size:3rem">&#128274;</span>',
+        '<h2>Access Denied</h2>',
+        '<p>You need admin privileges to access this page.</p>',
+        '<a href="login.html" class="btn-primary">Login as Admin</a>',
+      '</div>',
+    ].join('');
+    return;
+  }
+
+  let activeTab      = 'inventory';
+  let editingProduct = null;
+  const STATUS_OPTIONS = ['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'];
+  const DEFAULT_IMAGE  = 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&q=80';
+
+  // ── Stats ──────────────────────────────────────────────────────────────────
+  function computeStats() {
+    const orders   = DB.getAllOrders();
+    const products = DB.getAllProducts();
+    const revenue  = orders.reduce((s, o) => s + (o.total || 0), 0);
+    const pending  = orders.filter(o => o.status === 'Pending').length;
+    const customers = new Set(orders.map(o => o.customerId).filter(id => id && id !== 'guest')).size;
+    return { revenue, orders: orders.length, pending, customers, products: products.length };
+  }
+
+  function renderStats() {
+    const s = computeStats();
+    return [
+      '<div class="stats-grid">',
+        statCard('$' + s.revenue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }), 'Total Revenue', '#fde8ec', '#e94560'),
+        statCard(s.orders,    'Total Orders',   '#e0f0fb', '#1a6fa8'),
+        statCard(s.pending,   'Pending Orders', '#fef3c7', '#b45309'),
+        statCard(s.customers, 'Customers',      '#e8f5ec', '#2d8a4e'),
+      '</div>',
+    ].join('');
+  }
+
+  function statCard(val, label, bg, color) {
+    return [
+      '<div class="stat-card">',
+        '<div class="stat-icon" style="background:' + bg + ';color:' + color + '">&#9679;</div>',
+        '<div>',
+          '<p class="stat-label">' + Utils.esc(label) + '</p>',
+          '<p class="stat-value">' + val + '</p>',
+        '</div>',
+      '</div>',
+    ].join('');
+  }
+
+  // ── Tabs ───────────────────────────────────────────────────────────────────
+  function renderTabs() {
+    return [
+      '<div class="admin-tabs">',
+        '<button class="admin-tab ' + (activeTab === 'inventory' ? 'tab-active' : '') + '" data-tab="inventory">&#128230; Inventory</button>',
+        '<button class="admin-tab ' + (activeTab === 'orders'    ? 'tab-active' : '') + '" data-tab="orders">&#128717; Orders</button>',
+        '<button class="admin-tab ' + (activeTab === 'users'     ? 'tab-active' : '') + '" data-tab="users">&#128100; Users</button>',
+      '</div>',
+    ].join('');
+  }
+
+  // ── Inventory Tab ──────────────────────────────────────────────────────────
+  function renderInventory() {
+    const products = DB.getAllProducts();
+    const rows = products.map(p => [
+      '<tr>',
+        '<td>',
+          '<div class="product-cell">',
+            '<img src="' + Utils.esc(p.image || DEFAULT_IMAGE) + '" class="product-thumb" alt="">',
+            '<div>',
+              '<span class="product-name-cell">' + Utils.esc(p.name) + '</span>',
+              '<span class="product-id-cell">' + Utils.esc(p.id) + '</span>',
+            '</div>',
+          '</div>',
+        '</td>',
+        '<td><span class="cat-badge">' + Utils.esc(p.category) + '</span></td>',
+        '<td>',
+          '<span class="price-cell">' + Utils.formatPrice(p.price) + '</span>',
+          (p.originalPrice ? '<span class="orig-cell">' + Utils.formatPrice(p.originalPrice) + '</span>' : ''),
+        '</td>',
+        '<td><span class="stock-cell ' + (p.stock < 10 ? 'stock-low' : '') + '">' + p.stock + '</span></td>',
+        '<td><span class="rating-cell">' + (p.rating > 0 ? '&#9733; ' + p.rating : '—') + '</span></td>',
+        '<td>',
+          '<div class="row-actions">',
+            '<button class="edit-btn" data-edit="' + Utils.esc(p.id) + '" title="Edit">&#9998;</button>',
+            '<button class="delete-btn" data-delete="' + Utils.esc(p.id) + '" title="Delete">&#128465;</button>',
+          '</div>',
+        '</td>',
+      '</tr>',
+    ].join('')).join('');
+
+    return [
+      '<div class="admin-section">',
+        '<div class="admin-section-header">',
+          '<h2 class="admin-section-title">Product Inventory (' + products.length + ')</h2>',
+          '<button class="btn-primary" id="add-product-btn">+ Add Product</button>',
+        '</div>',
+        products.length === 0
+          ? '<p style="padding:var(--space-8);color:var(--color-text-muted);text-align:center">No products yet. Click "+ Add Product" to get started.</p>'
+          : '<div class="table-wrap"><table class="admin-table"><thead><tr><th>Product</th><th>Category</th><th>Price</th><th>Stock</th><th>Rating</th><th>Actions</th></tr></thead><tbody>' + rows + '</tbody></table></div>',
+      '</div>',
+    ].join('');
+  }
+
+  // ── Orders Tab ─────────────────────────────────────────────────────────────
+  function renderOrders() {
+    const orders = DB.getAllOrders();
+    if (orders.length === 0) {
+      return '<div class="admin-section"><div class="admin-section-header"><h2 class="admin-section-title">Order Fulfillment</h2></div><p style="padding:var(--space-8);color:var(--color-text-muted);text-align:center">No orders yet.</p></div>';
+    }
+    const rows = orders.map(o => {
+      const opts = STATUS_OPTIONS.map(s =>
+        '<option value="' + s + '" ' + (o.status === s ? 'selected' : '') + '>' + s + '</option>'
+      ).join('');
+      return [
+        '<tr>',
+          '<td><span class="order-id-cell">' + Utils.esc(o.id) + '</span></td>',
+          '<td>',
+            '<span class="customer-name-cell">' + Utils.esc(o.customerName || 'Guest') + '</span>',
+            '<span class="customer-email-cell">' + Utils.esc(o.customerEmail || '') + '</span>',
+          '</td>',
+          '<td>' + o.items.reduce((s, i) => s + i.quantity, 0) + ' item(s)</td>',
+          '<td><span class="price-cell">' + Utils.formatPrice(o.total) + '</span></td>',
+          '<td style="color:var(--color-text-muted);white-space:nowrap">' + Utils.formatDate(o.createdAt) + '</td>',
+          '<td><select class="status-select" data-order-id="' + Utils.esc(o.id) + '">' + opts + '</select></td>',
+        '</tr>',
+      ].join('');
+    }).join('');
+
+    return [
+      '<div class="admin-section">',
+        '<div class="admin-section-header"><h2 class="admin-section-title">Order Fulfillment (' + orders.length + ')</h2></div>',
+        '<div class="table-wrap"><table class="admin-table">',
+          '<thead><tr><th>Order ID</th><th>Customer</th><th>Items</th><th>Total</th><th>Date</th><th>Status</th></tr></thead>',
+          '<tbody>' + rows + '</tbody>',
+        '</table></div>',
+      '</div>',
+    ].join('');
+  }
+
+  // ── Users Tab ──────────────────────────────────────────────────────────────
+  function renderUsers() {
+    const users = DB.users;
+    const rows = users.map(u => [
+      '<tr>',
+        '<td><span style="font-weight:600">' + Utils.esc(u.name) + '</span></td>',
+        '<td>' + Utils.esc(u.email) + '</td>',
+        '<td><span class="cat-badge">' + Utils.esc(u.role) + '</span></td>',
+        '<td style="color:var(--color-text-muted)">' + Utils.esc(u.id) + '</td>',
+      '</tr>',
+    ].join('')).join('');
+
+    return [
+      '<div class="admin-section">',
+        '<div class="admin-section-header"><h2 class="admin-section-title">Registered Users (' + users.length + ')</h2></div>',
+        users.length === 0
+          ? '<p style="padding:var(--space-8);color:var(--color-text-muted);text-align:center">No users registered yet.</p>'
+          : '<div class="table-wrap"><table class="admin-table"><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>ID</th></tr></thead><tbody>' + rows + '</tbody></table></div>',
+      '</div>',
+    ].join('');
+  }
+
+  // ── Full Render ────────────────────────────────────────────────────────────
+  function fullRender() {
+    let tabContent;
+    if (activeTab === 'inventory') tabContent = renderInventory();
+    else if (activeTab === 'orders') tabContent = renderOrders();
+    else tabContent = renderUsers();
+
+    root.innerHTML = renderStats() + renderTabs() + tabContent;
+    bindEvents();
+  }
+
+  function bindEvents() {
+    // Tabs
+    root.querySelectorAll('[data-tab]').forEach(btn => {
+      btn.addEventListener('click', () => { activeTab = btn.dataset.tab; fullRender(); });
+    });
+
+    // Add product
+    root.querySelector('#add-product-btn')?.addEventListener('click', openAddModal);
+
+    // Edit product
+    root.querySelectorAll('[data-edit]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const p = DB.getProductById(btn.dataset.edit);
+        if (p) openEditModal(p);
+      });
+    });
+
+    // Delete product
+    root.querySelectorAll('[data-delete]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (confirm('Delete this product? This cannot be undone.')) {
+          DB.deleteProduct(btn.dataset.delete);
+          Utils.toast('Product deleted', 'success');
+          fullRender();
+        }
+      });
+    });
+
+    // Order status change
+    root.querySelectorAll('.status-select').forEach(sel => {
+      sel.addEventListener('change', () => {
+        DB.updateOrderStatus(sel.dataset.orderId, sel.value);
+        Utils.toast('Order status updated to ' + sel.value, 'success');
+      });
+    });
+  }
+
+  // ── Modal ──────────────────────────────────────────────────────────────────
+  function openAddModal() {
+    editingProduct = null;
+    document.getElementById('modal-title').textContent  = 'Add New Product';
+    document.getElementById('modal-submit').textContent = 'Add Product';
+    document.getElementById('product-form').reset();
+    document.querySelector('[name=id]').value = '';
+    document.getElementById('product-modal').classList.remove('hidden');
+    document.querySelector('[name=name]').focus();
+  }
+
+  function openEditModal(product) {
+    editingProduct = product;
+    document.getElementById('modal-title').textContent  = 'Edit Product';
+    document.getElementById('modal-submit').textContent = 'Save Changes';
+    const form = document.getElementById('product-form');
+    form.querySelector('[name=id]').value           = product.id;
+    form.querySelector('[name=name]').value         = product.name;
+    form.querySelector('[name=category]').value     = product.category;
+    form.querySelector('[name=description]').value  = product.description || '';
+    form.querySelector('[name=price]').value        = product.price;
+    form.querySelector('[name=originalPrice]').value = product.originalPrice || '';
+    form.querySelector('[name=stock]').value        = product.stock;
+    form.querySelector('[name=image]').value        = product.image || '';
+    form.querySelector('[name=featured]').checked   = !!product.featured;
+    document.getElementById('product-modal').classList.remove('hidden');
+  }
+
+  function closeModal() {
+    document.getElementById('product-modal').classList.add('hidden');
+  }
+
+  document.getElementById('modal-close').addEventListener('click', closeModal);
+  document.getElementById('modal-cancel').addEventListener('click', closeModal);
+  document.getElementById('product-modal').addEventListener('click', e => {
+    if (e.target === e.currentTarget) closeModal();
+  });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeModal();
+  });
+
+  // ── Product Form Submit ────────────────────────────────────────────────────
+  document.getElementById('product-form').addEventListener('submit', e => {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    const rawPrice    = parseFloat(fd.get('price'));
+    const rawOriginal = fd.get('originalPrice') ? parseFloat(fd.get('originalPrice')) : undefined;
+
+    if (isNaN(rawPrice) || rawPrice < 0) {
+      Utils.toast('Please enter a valid price', 'error'); return;
+    }
+
+    const product = {
+      id:            fd.get('id') || ('p-' + Date.now()),
+      name:          fd.get('name').trim(),
+      description:   fd.get('description').trim(),
+      price:         rawPrice,
+      originalPrice: (rawOriginal && rawOriginal > rawPrice) ? rawOriginal : undefined,
+      category:      fd.get('category'),
+      image:         (fd.get('image') || '').trim() || DEFAULT_IMAGE,
+      stock:         parseInt(fd.get('stock')) || 0,
+      featured:      fd.get('featured') === 'on',
+      rating:        editingProduct ? editingProduct.rating      : 0,
+      reviewCount:   editingProduct ? editingProduct.reviewCount : 0,
+      isNew:         editingProduct ? editingProduct.isNew       : true,
+    };
+
+    if (editingProduct) {
+      DB.updateProduct(product);
+      Utils.toast('Product updated successfully', 'success');
+    } else {
+      DB.createProduct(product);
+      Utils.toast('Product added successfully', 'success');
+    }
+
+    closeModal();
+    fullRender();
+  });
+
+  fullRender();
+})();
+</script>
+</body>
+</html>

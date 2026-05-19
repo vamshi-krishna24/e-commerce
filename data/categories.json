@@ -1,0 +1,8 @@
+[
+  { "name": "Electronics", "icon": "⚡", "image": "https://images.unsplash.com/photo-1468495244123-6c6c332eeece?w=400&q=80", "slug": "Electronics" },
+  { "name": "Clothing", "icon": "👕", "image": "https://images.unsplash.com/photo-1467043237213-65f2da53396f?w=400&q=80", "slug": "Clothing" },
+  { "name": "Home & Garden", "icon": "🏠", "image": "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=400&q=80", "slug": "Home & Garden" },
+  { "name": "Sports", "icon": "🏃", "image": "https://images.unsplash.com/photo-1526506118085-60ce8714f8c5?w=400&q=80", "slug": "Sports" },
+  { "name": "Books", "icon": "📚", "image": "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=400&q=80", "slug": "Books" },
+  { "name": "Beauty", "icon": "✨", "image": "https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=400&q=80", "slug": "Beauty" }
+]

@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login – MarketCore</title>
+  <link rel="stylesheet" href="css/theme.css">
+  <link rel="stylesheet" href="css/reset.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/pages/auth.css">
+</head>
+<body>
+<div id="navbar"></div>
+<main class="auth-page">
+  <div class="auth-card">
+    <div class="auth-header">
+      <a href="index.html" class="auth-logo">Market<span>Core</span></a>
+      <h1>Welcome back</h1>
+      <p>Sign in to your account to continue</p>
+    </div>
+    <div class="auth-demo">
+      <strong>Demo accounts:</strong>
+      <span>&#128100; Customer: alice@example.com / password</span>
+      <span>&#128736; Admin: admin@marketcore.com / admin123</span>
+    </div>
+    <div class="auth-error hidden" id="auth-error"></div>
+    <form id="login-form" class="auth-form" novalidate>
+      <div class="form-group">
+        <label for="login-email">Email address</label>
+        <div class="input-wrap">
+          <span class="input-icon">&#9993;</span>
+          <input id="login-email" type="email" name="email" placeholder="alice@example.com" required class="icon-input" autocomplete="email">
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="login-password">Password</label>
+        <div class="input-wrap">
+          <span class="input-icon">&#128274;</span>
+          <input id="login-password" type="password" name="password" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;" required class="icon-input" autocomplete="current-password">
+        </div>
+      </div>
+      <button type="submit" class="auth-submit" id="login-btn">Sign In</button>
+    </form>
+    <p class="auth-footer">Don't have an account? <a href="register.html">Create one</a></p>
+  </div>
+</main>
+<div id="footer"></div>
+<script src="js/db.js"></script>
+<script src="js/store.js"></script>
+<script src="js/utils.js"></script>
+<script>
+(async () => {
+  await Utils.initPage();
+
+  // Already logged in — redirect
+  if (Store.state.user) {
+    window.location.href = Store.state.user.role === 'admin' ? 'admin.html' : 'index.html';
+    return;
+  }
+
+  const form   = document.getElementById('login-form');
+  const errEl  = document.getElementById('auth-error');
+  const btn    = document.getElementById('login-btn');
+
+  form.addEventListener('submit', async e => {
+    e.preventDefault();
+    errEl.classList.add('hidden');
+    btn.disabled    = true;
+    btn.textContent = 'Signing in...';
+
+    const email    = form.email.value.trim();
+    const password = form.password.value;
+
+    if (!email || !password) {
+      errEl.textContent = 'Please enter your email and password.';
+      errEl.classList.remove('hidden');
+      btn.disabled    = false;
+      btn.textContent = 'Sign In';
+      return;
+    }
+
+    const user = DB.findUser(email, password);
+    if (!user) {
+      errEl.textContent = 'Invalid email or password. Please try again.';
+      errEl.classList.remove('hidden');
+      btn.disabled    = false;
+      btn.textContent = 'Sign In';
+      form.password.value = '';
+      form.password.focus();
+      return;
+    }
+
+    Store.login({ id: user.id, name: user.name, email: user.email, role: user.role });
+    Utils.toast('Welcome back, ' + user.name.split(' ')[0] + '!', 'success');
+
+    // Redirect
+    const redirect = new URLSearchParams(window.location.search).get('redirect');
+    setTimeout(() => {
+      window.location.href = redirect || (user.role === 'admin' ? 'admin.html' : 'index.html');
+    }, 500);
+  });
+})();
+</script>
+</body>
+</html>

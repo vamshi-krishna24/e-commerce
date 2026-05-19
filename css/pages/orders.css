@@ -1,0 +1,23 @@
+.orders-page { padding: var(--space-10) 0 var(--space-16); }
+.orders-header { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: var(--space-8); flex-wrap: wrap; gap: var(--space-4); }
+.orders-title { font-family: var(--family-display); font-size: var(--text-4xl); font-weight: 700; color: var(--color-text-primary); line-height: 1.2; }
+.orders-sub { font-size: var(--text-base); color: var(--color-text-muted); margin-top: var(--space-1); }
+.orders-guest { text-align: center; padding: var(--space-20) 0; display: flex; flex-direction: column; align-items: center; gap: var(--space-4); color: var(--color-text-muted); }
+.orders-guest h2 { font-family: var(--family-display); font-size: var(--text-3xl); color: var(--color-text-primary); }
+.orders-empty { text-align: center; padding: var(--space-16) 0; display: flex; flex-direction: column; align-items: center; gap: var(--space-4); color: var(--color-text-muted); }
+.orders-list { display: flex; flex-direction: column; gap: var(--space-5); }
+.order-card { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-xl); overflow: hidden; }
+.order-header { display: flex; justify-content: space-between; align-items: center; padding: var(--space-5) var(--space-6); border-bottom: 1px solid var(--color-border); background: var(--color-surface-2); flex-wrap: wrap; gap: var(--space-3); }
+.order-id { font-weight: 700; font-size: var(--text-base); color: var(--color-primary); display: block; }
+.order-date { font-size: var(--text-xs); color: var(--color-text-muted); display: block; margin-top: 2px; }
+.order-meta { display: flex; align-items: center; gap: var(--space-4); }
+.order-total { font-size: var(--text-lg); font-weight: 700; color: var(--color-text-primary); }
+.order-items { padding: var(--space-4) var(--space-6); display: flex; flex-direction: column; gap: var(--space-3); }
+.order-item { display: flex; align-items: center; gap: var(--space-4); }
+.order-item-img { width: 56px; height: 56px; border-radius: var(--radius-md); object-fit: cover; flex-shrink: 0; }
+.order-item-info { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+.order-item-name { font-size: var(--text-sm); font-weight: 500; color: var(--color-text-primary); }
+.order-item-qty { font-size: var(--text-xs); color: var(--color-text-muted); }
+.order-item-price { font-weight: 600; font-size: var(--text-sm); color: var(--color-text-primary); }
+.order-footer { padding: var(--space-3) var(--space-6); border-top: 1px solid var(--color-border); background: var(--color-surface-2); }
+.shipping-to { font-size: var(--text-xs); color: var(--color-text-muted); }
