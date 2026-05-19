@@ -1,5 +1,5 @@
-# MarketCore - HTML/CSS/JS Version
- e-commerce application.
+
+ #e-commerce application.
 
 ## How to Run
 
