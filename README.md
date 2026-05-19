@@ -1,7 +1,5 @@
 # MarketCore - HTML/CSS/JS Version
-
-A fully self-contained e-commerce application built with plain HTML, CSS, and JavaScript.
-Uses JSON files as the database (with localStorage for persistence).
+ e-commerce application.
 
 ## How to Run
 
@@ -52,12 +50,6 @@ html-version/
   admin.html        # Admin dashboard
 ```
 
-## Demo Accounts
-
-| Role     | Email                    | Password  |
-|----------|--------------------------|-----------|
-| Customer | alice@example.com        | password  |
-| Admin    | admin@marketcore.com     | admin123  |
 
 ## Features
 
